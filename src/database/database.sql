@@ -45,7 +45,7 @@ CREATE TABLE comments_posts(
     likes INTEGER NOT NULL,
     dislikes INTEGER NOT NULL,
     created_at TEXT NOT NULL,
-    updated_at TEXT NOT NULL
+    updated_at TEXT NOT NULL,
     
     Foreign Key (user_id) REFERENCES users(id)
     ON UPDATE CASCADE
