@@ -1,4 +1,4 @@
--- Active: 1692368586405@@127.0.0.1@3306
+-- Active: 1692371974737@@127.0.0.1@3306
 CREATE TABLE users(
     id TEXT UNIQUE PRIMARY KEY NOT NULL,
     name TEXT NOT NULL,
@@ -12,7 +12,7 @@ CREATE TABLE posts(
     id TEXT UNIQUE PRIMARY KEY NOT NULL,
     creator_id TEXT NOT NULL,
     content TEXT NOT NULL,
-    comments TEXT NOT NULL,
+    comments INTEGER NOT NULL,
     likes INTEGER NOT NULL,
     dislikes INTEGER NOT NULL,
     created_at TEXT DEFAULT(DATE()) NOT NULL,
@@ -70,3 +70,4 @@ CREATE TABLE comments_likes(
     ON DELETE CASCADE
 );
 
+DROP TABLE comments_likes;
