@@ -1,7 +1,7 @@
-import { TokenPayload, UserModel } from "../models/User"
+import { TokenPayload, UserModel } from "../models/UserModel"
 import { UserDatabase } from "../database/UserDatabase"
-import { User } from "../models/User"
-import { UsersDB } from "../types/types"
+import { User } from "../models/UserModel"
+import { UserDB } from "../models/UserModel"
 import { IdGenerator } from "../services/idGenerator"
 import { SignupInputDTO, SignupOutputDTO } from "../dtos/signup.dto"
 import { TokenManager, TokenPayLoad, USER_ROLES } from "../services/TokenManager"
@@ -33,9 +33,12 @@ export class UserBusiness {
             throw new BadRequest("Only Admins can use this function.")
         }
 
-        const usersDB: UsersDB[] = await this.userDatabase.getUsers(q)
+        const usersDB: UserDB[] = await this.userDatabase.getUsers(q)
+        if (!usersDB) {
+            throw new NotFoundError("User not found.")
+        }
 
-        const users = usersDB.map((userDB) => {
+        const users: UserModel[] = usersDB.map((userDB) => {
             const user = new User(
                 userDB.id,
                 userDB.name,
@@ -46,6 +49,7 @@ export class UserBusiness {
             )
 
             return user.toBusinessModel()
+
         })
 
         const output: GetUsersOutputDTO = users
@@ -64,7 +68,7 @@ export class UserBusiness {
 
         const hashedPassword = await this.hashManager.hash(password)
 
-        const userDBExist: UsersDB = await this.userDatabase.getUserByEmail(email)
+        const userDBExist: UserDB = await this.userDatabase.getUserByEmail(email)
 
 
 
@@ -75,7 +79,7 @@ export class UserBusiness {
 
         const newUser: User = new User(id, name, email, hashedPassword, USER_ROLES.NORMAL, new Date().toISOString())
 
-        const newUserDB: UsersDB = {
+        const newUserDB: UserDB = {
             id: newUser.getId(),
             name: newUser.getName(),
             email: newUser.getEmail(),
@@ -109,7 +113,7 @@ export class UserBusiness {
 
         const { email, password } = input
 
-        const userDB: UsersDB = await this.userDatabase.getUserByEmail(email)
+        const userDB: UserDB = await this.userDatabase.getUserByEmail(email)
 
         if (!userDB) {
             throw new NotFoundError("Email not found.")
@@ -117,9 +121,9 @@ export class UserBusiness {
 
         const hashedPassword: string = userDB.password
 
+
+
         const isPasswordCorrect = await this.hashManager.compare(password, hashedPassword)
-
-
         if (!isPasswordCorrect) {
             throw new BadRequest("Incorrect email or password.")
         }

@@ -1,61 +1,58 @@
-export interface PostsDB {
+export interface CommentsDB {
     id: string,
-    creator_id: string,
+    user_id: string,
+    post_id: string,
     content: string,
-    comments: number,
     likes: number,
     dislikes: number,
     created_at: string,
     updated_at: string
 }
 
-export interface PostsModel {
+export interface CommentsModel {
     id: string,
-    creatorId: string,
+    userId: string,
+    postId: string,
     content: string,
-    comments: number,
     likes: number,
     dislikes: number,
     createdAt: string,
     updatedAt: string
 }
 
-export interface LikesDB {
+export interface CommentsLikeDB {
     user_id: string,
-    post_id: string,
+    comment_id: string,
     like: number
 }
 
-export interface LikesModel {
+export interface CommentsLikeModel {
     userId: string,
-    postId: string,
+    comment: string,
     like: number
 }
 
-
-
-export class Post {
+export class Comments {
     constructor(
         private id: string,
-        private creatorId: string,
+        private userId: string,
+        private postId: string,
         private content: string,
-        private comments: number,
         private likes: number,
         private dislikes: number,
         private createdAt: string,
-        private updatedAt: string
-
+        private updatedAt: string,
     ) {
         this.id = id
-        this.creatorId = creatorId
+        this.userId = userId
+        this.postId = postId
         this.content = content
-        this.comments = comments
         this.likes = likes
         this.dislikes = dislikes
         this.createdAt = createdAt
         this.updatedAt = updatedAt
-    }
 
+    }
     public getId(): string {
         return this.id
     }
@@ -63,11 +60,19 @@ export class Post {
         this.id = value
     }
 
-    public getCreatorId(): string {
-        return this.creatorId
+    public getUserId(): string {
+        return this.userId
     }
-    public setCreatorId(value: string): void {
-        this.creatorId = value
+    public setUserId(value: string): void {
+        this.userId = value
+    }
+
+    public getPostId(): string {
+        return this.postId
+    }
+
+    public setPostId(value: string): void {
+        this.postId = value
     }
 
     public getContent(): string {
@@ -77,12 +82,6 @@ export class Post {
         this.content = value
     }
 
-    public getComments(): number {
-        return this.comments
-    }
-    public setComments(): void {
-
-    }
     public getLikes(): number {
         return this.likes
     }
@@ -110,16 +109,15 @@ export class Post {
     public getUploadedAt(): string {
         return this.updatedAt
     }
-    public setUploadedAt(value: string): void {
+    public setUpdateddAt(value: string): void {
         this.updatedAt = value
     }
 
     public postToDB() {
         return {
             id: this.getId(),
-            creator_id: this.getCreatorId(),
+            creator_id: this.getUserId(),
             content: this.getContent(),
-            comments: this.getComments(),
             likes: this.getLikes(),
             dislikes: this.getDislikes(),
             created_at: this.getCreatedAt(),

@@ -65,9 +65,9 @@ CREATE TABLE comments_likes(
     ON UPDATE CASCADE
     ON DELETE CASCADE
     
-    Foreign Key (comment_id) REFERENCES comment(id)
+    Foreign Key (comment_id) REFERENCES comments_posts(id)
     ON UPDATE CASCADE
     ON DELETE CASCADE
 );
 
-DROP TABLE comments_likes;
+
