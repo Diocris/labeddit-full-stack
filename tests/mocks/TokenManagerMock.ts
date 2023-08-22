@@ -24,14 +24,21 @@ export class TokenManagerMock {
                 role: USER_ROLES.ADMIN
             }
 
-        } else if (token === "token-mock-astrodev") {
+        } else if (token === "token-mock-user") {
             return {
                 id: "id-mock-user",
                 name: "Test User",
                 role: USER_ROLES.NORMAL
             }
 
-        } else {
+        } else if (token === "token-mock-test-error") {
+            return {
+                id: "id-mock-test-error",
+                name: "Test Error",
+                role: USER_ROLES.NORMAL
+            }
+        }
+        else {
             return null
         }
     }

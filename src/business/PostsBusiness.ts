@@ -11,11 +11,11 @@ import { IdGenerator } from "../services/idGenerator";
 import { LikesDB, Post, PostsDB, PostsModel } from "../models/PostModel";
 import { LikesDatabase } from "../database/LikesDatabase";
 import { LikeDislikeInputDTO, LikeDislikeOutputDTO } from "../dtos/likeDislikePost.dto";
-import { TokenPayload, UserDB } from "../models/UserModel";
+import { User, UserDB } from "../models/UserModel";
 import { Comments, CommentsDB, CommentsLikeDB } from "../models/CommentModel";
 import { CommentPostInputDTO, CommentPostOutputDTO } from "../dtos/commentPost.dto";
 import { LikeCommentInputDTO, LikeCommentOutputDTO } from "../dtos/likeComment.dto";
-import { CommentDTO, GetPostInfoOuputDTO } from "../dtos/getPostInfo.dto";
+import { CommentDTO, GetPostInfoInputDTO, GetPostInfoOuputDTO } from "../dtos/getPostInfo.dto";
 
 export class PostsBusiness {
     constructor(private postsDatabase: PostsDatabase, private idGenerator: IdGenerator, private tokenManager: TokenManager, private userDatabase: UserDatabase, private likesDatabase: LikesDatabase) { }
@@ -23,41 +23,89 @@ export class PostsBusiness {
     //
     //Get Posts
     //
-    public getAllPosts = async (input: GetPostsInputDTO): Promise<GetPostOutputDTO[]> => {
+    public getAllPosts = async (input: GetPostsInputDTO): Promise<GetPostOutputDTO | GetPostOutputDTO[]> => {
 
         const { auth, id } = input
 
-        if (!auth) {
-            throw new BadRequest("Authorization required.")
+        const payload = await this.tokenManager.getPayLoad(auth)
+
+        if (!payload || payload === null) {
+            throw new BadRequest("Invalid token.")
         }
 
-        const postsDatabase: PostsDB[] = await this.postsDatabase.getPosts(id)
+        if (id) {
+            const [postDB]: PostsDB[] = await this.postsDatabase.getPostsById(id)
 
-        const output = []
-
-        for (const post of postsDatabase) {
-
-            const [user] = await this.userDatabase.getUsers(post.creator_id)
-
-            const postDB: GetPostOutputDTO = {
-                id: post.id,
-                content: post.content,
-                comments: post.comments,
-                likes: post.likes - post.dislikes,
-                createdAt: post.created_at,
-                uploadedAt: post.updated_at,
-                creator: {
-                    id: await user.id,
-                    name: await user.name
-                }
-
+            if (!postDB) {
+                throw new NotFoundError("Post not found.")
             }
 
-            output.push(postDB)
+            const post: Post = new Post(
+                postDB.id,
+                postDB.creator_id,
+                postDB.content,
+                postDB.comments,
+                postDB.likes,
+                postDB.dislikes,
+                postDB.created_at,
+                postDB.updated_at
+            )
+
+            const postModel = post.postToDB()
+
+            const [userDB]: UserDB[] = await this.userDatabase.getUsers(postDB.creator_id)
+
+            const user: User = new User(
+                userDB.id,
+                userDB.name,
+                userDB.email,
+                userDB.password,
+                userDB.role,
+                userDB.created_at
+            )
+
+            const userModel = user.toBusinessModel()
+
+            const output: GetPostOutputDTO = {
+                id: postModel.id,
+                content: postModel.content,
+                comments: postModel.comments,
+                likes: postModel.likes - postModel.dislikes,
+                createdAt: postModel.created_at,
+                uploadedAt: postModel.uploaded_at,
+                creator: {
+                    id: userModel.id,
+                    name: userModel.name
+                }
+            }
+
+            return output
+        } else {
+            const postsDB = await this.postsDatabase.getPosts()
+            const output = []
+            for (const post of postsDB) {
+
+                const [user]: UserDB[] = await this.userDatabase.getUsers(post.creator_id)
+
+                const postDB: GetPostOutputDTO = {
+                    id: post.id,
+                    content: post.content,
+                    comments: post.comments,
+                    likes: post.likes - post.dislikes,
+                    createdAt: post.created_at,
+                    uploadedAt: post.updated_at,
+                    creator: {
+                        id: await user.id,
+                        name: await user.name
+                    }
+
+                }
+
+                output.push(postDB)
+            }
+
+            return output
         }
-
-        return output
-
     }
 
     //
@@ -67,11 +115,12 @@ export class PostsBusiness {
 
         const { content, token } = input
 
-        const userToken = this.tokenManager.getPayLoad(token)
-        if (!userToken) {
+        const payload = this.tokenManager.getPayLoad(token)
+        if (!payload) {
             throw new BadRequest("Token not found.")
         }
-        const [user]: UserDB[] = await this.userDatabase.getUsers(userToken?.id)
+
+        const [user]: UserDB[] = await this.userDatabase.getUsers(payload.id)
         if (!user) {
             throw new NotFoundError("User not found, authorization must be wrong, check it again.")
         }
@@ -119,21 +168,22 @@ export class PostsBusiness {
             throw new BadRequest("Token not found.")
         }
 
-        const [user]: UserDB[] = await this.userDatabase.getUsers(payLoad?.id)
+        const [user]: UserDB[] = await this.userDatabase.getUsersById(payLoad.id)
 
         if (!user) {
             throw new NotFoundError("User not found.")
         }
 
-        if (user.id !== payLoad?.id) {
-            throw new BadRequest("Only the post creator can edit it.")
-        }
-
-        const [post]: PostsDB[] = await this.postsDatabase.getPosts(postId)
+        const [post]: PostsDB[] = await this.postsDatabase.getPostsById(postId)
 
         if (!post) {
             throw new NotFoundError("Post not found.")
         }
+
+        if (user.id !== post.creator_id) {
+            throw new BadRequest("Only the post creator can edit it.")
+        }
+
 
         const editedPostModel: Post = new Post(
             post.id, post.creator_id, content, post.comments, post.likes, post.dislikes, post.created_at, new Date().toISOString()
@@ -165,17 +215,14 @@ export class PostsBusiness {
     public deletePost = async (input: DeletePostInputDTO): Promise<DeletePostOutputDTO> => {
         const { token, postId } = input
 
-        if (!token) {
+        const payLoad = this.tokenManager.getPayLoad(token)
+        if (!payLoad) {
             throw new BadRequest("Token invalid.")
         }
 
-        if (postId === ":id" || !postId) {
-            throw new BadRequest("Post ID is expected.")
-        }
+        const [user]: UserDB[] = await this.userDatabase.getUsersById(payLoad.id)
 
-        const creator: TokenPayLoad | null = this.tokenManager.getPayLoad(token)
-
-        const [post]: PostsDB[] = await this.postsDatabase.getPosts(postId)
+        const [post]: PostsDB[] = await this.postsDatabase.getPostsById(postId)
 
 
 
@@ -183,7 +230,7 @@ export class PostsBusiness {
             throw new NotFoundError("Post not found.")
         }
 
-        if (creator?.id !== post.creator_id) {
+        if (user.id !== post.creator_id) {
             throw new BadRequest("Only the post creator can delete it.")
         }
 
@@ -204,7 +251,12 @@ export class PostsBusiness {
         const { token, postId, like } = input
 
         let output;
-        let likeValue = like ? 1 : 0
+        let likeValue;
+        if (like === true) {
+            likeValue = 1
+        } else if (like === false) {
+            likeValue = 0
+        }
 
 
         const payload: TokenPayLoad | null = await this.tokenManager.getPayLoad(token)
@@ -230,6 +282,7 @@ export class PostsBusiness {
             post_id: post.id,
             like: Number(likeValue)
         }
+
         if (post.creator_id === likePostDB.user_id) {
             throw new BadRequest("Creators can't like them own post.")
         }
@@ -239,45 +292,39 @@ export class PostsBusiness {
 
         if (liked) {
             if (liked.like === 1 && likePostDB.like === 1) {
-
                 await this.likesDatabase.deleteLike(likePostDB)
                 output = "You removed your like."
 
             } else if (liked.like === 0 && likePostDB.like === 0) {
-
                 await this.likesDatabase.deleteLike(likePostDB)
                 output = "You removed your dislike."
 
             } else if (liked.like === 1 && likePostDB.like === 0) {
-
                 await this.likesDatabase.editLike(likePostDB)
-                output = "You change your like to a dislike."
+                output = "You changed your like to a dislike."
 
             } else if (liked.like === 0 && likePostDB.like === 1) {
-
                 await this.likesDatabase.editLike(likePostDB)
-                output = "You change your like to a like."
+                output = "You changed your dislike to a like."
 
             }
         } else {
             if (likePostDB.like === 1) {
-
                 output = "You liked this post."
 
             } else if (likePostDB.like === 0) {
-
                 output = "You disliked this post."
 
             }
             await this.likesDatabase.likeDislike(likePostDB)
         }
 
-        const [likesFromDB] = await this.likesDatabase.postLikes(likePostDB.post_id)
-        const newLikes = Number(likesFromDB['count(*)'])
-        const [dislikesFromDB] = await this.likesDatabase.postDislikes(likePostDB.post_id)
-        const newDislikes = Number(dislikesFromDB['count(*)'])
+        const likesFromDB = await this.likesDatabase.postLikes(likePostDB.post_id)
 
-        await this.postsDatabase.editLikePost(likePostDB.post_id, newLikes, newDislikes)
+        const dislikesFromDB = await this.likesDatabase.postDislikes(likePostDB.post_id)
+
+
+        await this.postsDatabase.editLikePost(likePostDB.post_id, Number(likesFromDB), Number(dislikesFromDB))
 
         return output
 
@@ -289,7 +336,13 @@ export class PostsBusiness {
     public commentPost = async (input: CommentPostInputDTO): Promise<CommentPostOutputDTO> => {
         const { token, postId, comment } = input
 
-        const user = this.tokenManager.getPayLoad(token)
+        const payLoad: TokenPayLoad | null = await this.tokenManager.getPayLoad(token)
+
+        if (!payLoad) {
+            throw new BadRequest("Invalid token.")
+        }
+
+        const [user] = await this.userDatabase.getUsersById(payLoad.id)
 
         if (!user) {
             throw new NotFoundError("User not found.")
@@ -360,17 +413,24 @@ export class PostsBusiness {
 
     //Get full post with comments
 
-    public getPost = async (input: any) => {
-        const { token, postId } = input
+    public getPost = async (input: GetPostInfoInputDTO): Promise<GetPostInfoOuputDTO> => {
+        const { token, id } = input
 
-        if (!token) {
+        const payLoad = await this.tokenManager.getPayLoad(token)
+
+        if (!payLoad) {
             throw new BadRequest("Token not valid.")
         }
 
-        const [postDB]: PostsDB[] = await this.postsDatabase.getPosts(postId)
+        const [postDB]: PostsDB[] = await this.postsDatabase.getPostsById(id)
 
-        const commentsDB: CommentsDB[] = await this.postsDatabase.getCommentsByPostId(postId)
-
+        if (!postDB) {
+            throw new NotFoundError("Post not found.")
+        }
+        const commentsDB: CommentsDB[] = await this.postsDatabase.getCommentsByPostId(id)
+        if (!commentsDB || commentsDB.length === 0) {
+            throw new NotFoundError("Comments not found.")
+        }
         let comments = [];
 
         for (const comment of commentsDB) {
@@ -410,34 +470,29 @@ export class PostsBusiness {
     public likeComment = async (input: LikeCommentInputDTO): Promise<LikeCommentOutputDTO> => {
         const { token, postId, commentId, like } = input
 
-        if (!token) {
-            throw new BadRequest("Token invalid.")
+        const payLoad: TokenPayLoad | null = await this.tokenManager.getPayLoad(token)
+        if (!payLoad) {
+            throw new BadRequest("Invalid token.")
         }
 
         let output;
         let likeValue = like ? 1 : 0
 
 
-        const payload = await this.tokenManager.getPayLoad(token)
 
-        if (!payload) {
-            throw new NotFoundError("User not found")
-        }
-        const [userDB] = await this.userDatabase.getUsers(payload.id)
+        const [userDB] = await this.userDatabase.getUsersById(payLoad.id)
+
         if (!userDB) {
-            throw new NotFoundError("User not found")
+            throw new NotFoundError("User not found.")
         }
-        const [postDB] = await this.postsDatabase.getPosts(postId)
+        const [postDB] = await this.postsDatabase.getPostsById(postId)
         if (!postDB) {
-            throw new BadRequest("Post not found.")
+            throw new NotFoundError("Post not found.")
         }
         const [comment] = await this.postsDatabase.getCommentsById(commentId)
         if (!comment) {
             throw new NotFoundError("Comment not found.")
         }
-
-
-
 
         const commentsLikeDB: CommentsLikeDB = {
             user_id: userDB.id,
@@ -486,12 +541,12 @@ export class PostsBusiness {
         }
 
 
-        const [commentsLikesFromDB] = await this.postsDatabase.getCommentLikes(commentsLikeDB.comment_id)
-        const newCommentsLikes = Number(commentsLikesFromDB['count(*)'])
-        const [commentsDislikesFromDB] = await this.postsDatabase.getCommentDislikes(commentsLikeDB.comment_id)
-        const newCommentsDislikes = Number(commentsDislikesFromDB['count(*)'])
+        const commentsLikesFromDB = await this.postsDatabase.getCommentLikes(commentsLikeDB.comment_id)
 
-        await this.postsDatabase.editCommentPost(commentsLikeDB.comment_id, newCommentsLikes, newCommentsDislikes)
+        const commentsDislikesFromDB = await this.postsDatabase.getCommentDislikes(commentsLikeDB.comment_id)
+
+
+        await this.postsDatabase.editCommentPost(commentsLikeDB.comment_id, Number(commentsLikesFromDB), Number(commentsDislikesFromDB))
         return output
 
     }

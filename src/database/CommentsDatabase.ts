@@ -17,9 +17,13 @@ export class CommentsDatabase extends BaseDatabase {
     }
 
     public async countLike(input: any) {
-        return await BaseDatabase.connection(CommentsDatabase.COMMENTS_POSTS_TABLE).where({ post_id: input, like: 1 }).count()
+        const result = await BaseDatabase.connection(CommentsDatabase.COMMENTS_POSTS_TABLE).where({ post_id: input, like: 1 }).count()
+        console.log(result)
+        return result[0]['count(*)']
     }
     public async countDislike(input: any) {
-        return await BaseDatabase.connection(CommentsDatabase.COMMENTS_POSTS_TABLE).where({ post_id: input, like: 0 }).count()
+        const result = await BaseDatabase.connection(CommentsDatabase.COMMENTS_POSTS_TABLE).where({ post_id: input, like: 0 }).count()
+        console.log(result)
+        return result[0]['count(*)']
     }
 }

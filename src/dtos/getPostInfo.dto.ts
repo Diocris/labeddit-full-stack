@@ -1,11 +1,9 @@
-import z, { object } from "zod"
+import z from "zod"
 
 export interface GetPostInfoInputDTO {
     token: string,
     id: string
 }
-
-
 
 export interface GetPostInfoOuputDTO {
     postId: string,
@@ -26,4 +24,7 @@ export interface CommentDTO {
     commentUpdatedAt: string,
 }
 
-export const GetPostInfoSchema = z.object({}).transform(data => data as GetPostInfoInputDTO)
+export const GetPostInfoSchema = z.object({
+    token: z.string({ required_error: "Missing token.", invalid_type_error: "Invalid token format." }),
+    id: z.string({ required_error: "Missing post id.", invalid_type_error: "Invalid post id format." })
+}).transform(data => data as GetPostInfoInputDTO)

@@ -26,6 +26,12 @@ export class PostsDatabase extends BaseDatabase {
     }
 
     //
+    //Get Posts by Id
+    //
+    public async getPostsById(q: string) {
+        return await BaseDatabase.connection(PostsDatabase.POSTS_TABLE).where({ id: q })
+    }
+    //
     //Create Post
     //
     public async createNewPost(input: PostsDB): Promise<void> {
@@ -100,11 +106,13 @@ export class PostsDatabase extends BaseDatabase {
     }
     //get Dislikes
     public async getCommentLikes(input: string) {
-        return await BaseDatabase.connection(PostsDatabase.COMMENTS_LIKES).where({ comment_id: input, like: 1 }).count()
+        const result = await BaseDatabase.connection(PostsDatabase.COMMENTS_LIKES).where({ comment_id: input, like: 1 }).count()
+        return result[0]['count(*)']
     }
     //get Dislikes
     public async getCommentDislikes(input: string) {
-        return await BaseDatabase.connection(PostsDatabase.COMMENTS_LIKES).where({ comment_id: input, like: 0 }).count()
+        const result = await BaseDatabase.connection(PostsDatabase.COMMENTS_LIKES).where({ comment_id: input, like: 0 }).count()
+        return result[0]['count(*)']
     }
 
     //get full post

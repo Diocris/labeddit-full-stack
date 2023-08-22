@@ -34,7 +34,11 @@ export class UserDatabaseMock extends BaseDatabase {
 
 
     //Criar get users by id
+    public async getUsersById(id: string): Promise<UserDB[]> {
+        const result = usersMock.filter((user) => user.id === id)
+        return result
 
+    }
     //
     //Get User by Email
     //

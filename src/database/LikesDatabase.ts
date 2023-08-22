@@ -13,10 +13,16 @@ export class LikesDatabase extends BaseDatabase {
 
     //
     public async postLikes(input: string) {
-        return await BaseDatabase.connection(LikesDatabase.LIKES_TABLE).where({ post_id: input, like: 1 }).count()
+        const result = await BaseDatabase.connection(LikesDatabase.LIKES_TABLE).where({ post_id: input, like: 1 }).count()
+
+        return result[0]['count(*)']
+
+
     }
     public async postDislikes(input: string) {
-        return await BaseDatabase.connection(LikesDatabase.LIKES_TABLE).where({ post_id: input, like: 0 }).count()
+        const result = await BaseDatabase.connection(LikesDatabase.LIKES_TABLE).where({ post_id: input, like: 0 }).count()
+
+        return result[0]['count(*)']
     }
 
 

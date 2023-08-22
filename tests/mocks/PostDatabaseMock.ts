@@ -3,7 +3,118 @@ import { CommentsDB } from "../../src/models/CommentModel";
 import { PostsDB } from "../../src/models/PostModel";
 import { BaseDatabase } from "../../src/database/BaseDatabase";
 
-export class PostsDatabase extends BaseDatabase {
+const postDBMock = [
+    {
+        id: "id-mock-post01",
+        creator_id: "id-mock-user",
+        content: "Content mock first post.",
+        comments: 0,
+        likes: 0,
+        dislikes: 0,
+        created_at: String(new Date().toISOString()),
+        updated_at: String(new Date().toISOString())
+    }
+    , {
+        id: "id-mock-post02",
+        creator_id: "id-mock-admin",
+        content: "Content mock second post.",
+        comments: 2,
+        likes: 1,
+        dislikes: 0,
+        created_at: String(new Date().toISOString()),
+        updated_at: String(new Date().toISOString())
+    },
+    {
+        id: "id-mock-post03",
+        creator_id: "id-mock-admin",
+        content: "Content mock third post.",
+        comments: 0,
+        likes: 0,
+        dislikes: 0,
+        created_at: String(new Date().toISOString()),
+        updated_at: String(new Date().toISOString())
+    }
+]
+
+const createPostsMock = [{
+    id: "id-mock-post01",
+    content: "Content mock first post.",
+    comments: Number(0),
+    likes: Number(0),
+    createdAt: String(new Date().toISOString()),
+    uploadedAt: String(new Date().toISOString()),
+    creator: {
+        id: "id-mock-user",
+        name: "Test User."
+    }
+}, {
+    id: "id-mock-post02",
+    content: "Content mock second post.",
+    comments: Number(1),
+    likes: Number(1),
+    createdAt: String(new Date().toISOString()),
+    uploadedAt: String(new Date().toISOString()),
+    creator: {
+        id: "id-mock-admin",
+        name: "Test Admin"
+    }
+}]
+
+const commentMock = [{
+    id: "id-mock-comment01",
+    user_id: "id-mock-user",
+    post_id: "id-mock-post02",
+    content: "Content mock first comment second post.",
+    likes: 0,
+    dislikes: 1,
+    created_at: String(new Date().toISOString()),
+    updated_at: String(new Date().toISOString())
+}, {
+    id: "id-mock-comment02",
+    user_id: "id-mock-user",
+    post_id: "id-mock-post02",
+    content: "Content mock second comment second post.",
+    likes: 0,
+    dislikes: 0,
+    created_at: String(new Date().toISOString()),
+    updated_at: String(new Date().toISOString())
+}]
+
+const commentLikeMock = [{
+    user_id: "id-mock-admin",
+    comment_id: "id-mock-comment01",
+    like: 0
+},
+{
+    user_id: "id-mock-admin",
+    comment_id: "id-mock-comment02",
+    like: 1
+}]
+
+
+// const fullPostMock = {
+//     postId: "id-mock-post02",
+//     postCreator: "id-mock-admin",
+//     postContent: "Content mock second post.",
+//     postLikes: 1,
+//     postCreatedAt: String(new Date().toISOString()),
+//     postUpdatedAt: String(new Date().toISOString()),
+//     postComments: [
+//         {
+//             commentId: "id-mock-comment01-post02",
+//             commentUserId: "id-mock-user",
+//             commentUserName: "Test User",
+//             commentContent: "Comment mock second post.",
+//             commentLikes: 1,
+//             commentCreatedAt: String(new Date().toISOString()),
+//             commentUpdatedAt: String(new Date().toISOString())
+//         }
+//     ]
+// }
+
+
+
+export class PostsDatabaseMock extends BaseDatabase {
     public static POSTS_TABLE = "posts"
 
     public static COMMENTS_TABLE = "comments_posts"
@@ -15,24 +126,29 @@ export class PostsDatabase extends BaseDatabase {
     //
     public async getPosts(q?: string): Promise<PostsDB[]> {
         let result: PostsDB[] = []
-
         if (q) {
-            result = await BaseDatabase.connection(PostsDatabase.POSTS_TABLE).where({ id: q })
+            result = postDBMock.filter((post) => { return post.id === q })
         } else {
-            result = await BaseDatabase.connection(PostsDatabase.POSTS_TABLE)
+            for (const post of postDBMock) {
+                result.push(post)
+            }
+
         }
-
         return result
-    }
 
+    }
+    //
+    //Get Posts by Id
+    //
+    public async getPostsById(id: string) {
+        return postDBMock.filter((post) => post.id === id)
+    }
     //
     //Create Post
     //
-    public async createNewPost(input: PostsDB): Promise<void> {
-
+    public async createNewPost(input: PostsDB): Promise<any> {
+        return createPostsMock.filter((post) => post.id === input.id)
     }
-
-
 
     //
     //Edit Post
@@ -78,14 +194,14 @@ export class PostsDatabase extends BaseDatabase {
 
 
     //get Comments by Post
-    public async getCommentsByPostId(input: string) {
-        return await BaseDatabase.connection(PostsDatabase.COMMENTS_TABLE).where({ post_id: input })
+    public async getCommentsByPostId(input: string): Promise<any> {
+        return commentMock.filter((comment) => comment.post_id === input)
     }
 
 
     //get Comments by id
-    public async getCommentsById(input: string) {
-        return await BaseDatabase.connection(PostsDatabase.COMMENTS_TABLE).where({ id: input })
+    public async getCommentsById(input: string): Promise<any> {
+        return commentMock.filter((comment) => comment.id === input)
     }
 
 
@@ -95,25 +211,25 @@ export class PostsDatabase extends BaseDatabase {
     }
 
     //get Likes
-    public async getCommentLikesByCommentId(input: any) {
-        return await BaseDatabase.connection(PostsDatabase.COMMENTS_LIKES).where({ user_id: input.user_id, comment_id: input.comment_id })
+    public async getCommentLikesByCommentId(input: any): Promise<any> {
+        return commentLikeMock.filter((like) => like.user_id === input.user_id && like.comment_id === input.comment_id)
     }
     //get Dislikes
-    public async getCommentLikes(input: string) {
-        return await BaseDatabase.connection(PostsDatabase.COMMENTS_LIKES).where({ comment_id: input, like: 1 }).count()
+    public async getCommentLikes(input: string): Promise<any> {
+
     }
     //get Dislikes
-    public async getCommentDislikes(input: string) {
-        return await BaseDatabase.connection(PostsDatabase.COMMENTS_LIKES).where({ comment_id: input, like: 0 }).count()
+    public async getCommentDislikes(input: string): Promise<any> {
+
     }
 
     //get full post
-    public async getPost(input: string) {
-        return await BaseDatabase.connection(PostsDatabase.COMMENTS_TABLE).where({ post_id: input })
+    public async getPost(input: string): Promise<any> {
+
     }
 
     //delete Like
-    public async deleteLike(input: any) {
+    public async deleteLike(input: any): Promise<any> {
 
     }
 
@@ -124,7 +240,7 @@ export class PostsDatabase extends BaseDatabase {
     }
 
     //edit comment like
-    public async editCommentLike(input: any) {
+    public async editCommentLike(input: any): Promise<any> {
 
     }
 }

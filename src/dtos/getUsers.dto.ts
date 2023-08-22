@@ -7,9 +7,9 @@ export interface GetUsersInputDTO {
 }
 
 
-export type GetUsersOutputDTO = UserModel[]
+export type GetUsersOutputDTO = UserModel[] | UserModel
 
 export const GetUsersSchema = z.object({
-    q: z.string().min(1).optional(),
-    token: z.string().min(1),
+    q: z.string({ invalid_type_error: "id should be a string" }).min(1).optional(),
+    token: z.string({ required_error: "Token must be passed.", invalid_type_error: "Token format invalid." }),
 }).transform(data => data as GetUsersInputDTO)

@@ -19,9 +19,14 @@ export class UserDatabase extends BaseDatabase {
         return result
 
     }
-
     //Criar get users by id
+    public async getUsersById(id?: string): Promise<UserDB[]> {
 
+        const result = await BaseDatabase.connection(UserDatabase.USERS_TABLE).where({ id: id })
+
+        return result
+
+    }
     //
     //Get User by Email
     //

@@ -9,6 +9,7 @@ import { ZodError } from "zod";
 import { BaseError } from "../errors/BaseErrors";
 import { CommentPostInputDTO, CommentPostOutputDTO, CommentPostSchema } from "../dtos/commentPost.dto";
 import { LikeCommentInputSchema, LikeCommentOutputDTO } from "../dtos/likeComment.dto";
+import { GetPostInfoSchema } from "../dtos/getPostInfo.dto";
 
 
 export class PostsController {
@@ -23,8 +24,12 @@ export class PostsController {
 
         try {
 
-            const input: GetPostsInputDTO = getPostsSchema.parse({ auth: req.headers.authorization })
-            const output: GetPostOutputDTO[] = await this.postsBusiness.getAllPosts(input)
+            const input: GetPostsInputDTO = getPostsSchema.parse({
+                auth: req.headers.authorization,
+                id: req.query.id
+            })
+            console.log(input)
+            const output: GetPostOutputDTO[] | GetPostOutputDTO = await this.postsBusiness.getAllPosts(input)
 
 
             res.status(200).send(output)
@@ -157,10 +162,10 @@ export class PostsController {
     //
     public getPost = async (req: Request, res: Response) => {
         try {
-            const input = {
+            const input = GetPostInfoSchema.parse({
                 token: req.headers.authorization,
-                postId: req.params.id
-            }
+                id: req.params.id
+            })
 
             const output = await this.postsBusiness.getPost(input)
 

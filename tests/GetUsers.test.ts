@@ -1,3 +1,4 @@
+import { ZodError } from "zod"
 import { UserBusiness } from "../src/business/UserBusiness"
 import { GetUsersSchema } from "../src/dtos/getUsers.dto"
 import { BadRequest } from "../src/errors/BadRequestError"
@@ -40,6 +41,23 @@ describe("Testing Get users", () => {
         ])
     })
 
+    test("Should return an user array.", async () => {
+        const input = GetUsersSchema.parse({
+            q: "id-mock-user",
+            token: "token-mock-admin"
+        })
+
+        const output = await userBusiness.getUsers(input)
+        expect(output).toEqual({
+            id: "id-mock-user",
+            name: "Test User",
+            email: "testuser@email.com",
+            role: USER_ROLES.NORMAL,
+            createdAt: expect.any(String)
+        }
+        )
+    })
+
     test('Should return an BadRequest.', async () => {
         expect.assertions(2)
         try {
@@ -50,7 +68,7 @@ describe("Testing Get users", () => {
         } catch (error: any) {
             if (error instanceof BadRequest) {
                 expect(error.statusCode).toBe(400)
-                expect(error.message).toBe("Token inválido.")
+                expect(error.message).toBe("Invalid token.")
             }
         }
     })
@@ -68,6 +86,38 @@ describe("Testing Get users", () => {
             if (error instanceof NotFoundError) {
                 expect(error.statusCode).toBe(404)
                 expect(error.message).toBe("User not found.")
+            }
+        }
+    })
+
+    test('Should return a BadRequest of Invalid Token.', async () => {
+
+        expect.assertions(2)
+        try {
+            const input = GetUsersSchema.parse({
+                token: "token-mock-error"
+            })
+            await userBusiness.getUsers(input)
+        } catch (error: any) {
+            if (error instanceof BadRequest) {
+                expect(error.statusCode).toBe(400)
+                expect(error.message).toBe("Invalid token.")
+            }
+        }
+    })
+
+    test('Should return a BadRequest of Admin permissions.', async () => {
+
+        expect.assertions(2)
+        try {
+            const input = GetUsersSchema.parse({
+                token: "token-mock-user"
+            })
+            await userBusiness.getUsers(input)
+        } catch (error: any) {
+            if (error instanceof BadRequest) {
+                expect(error.statusCode).toBe(400)
+                expect(error.message).toBe("Only Admins can use this function.")
             }
         }
     })

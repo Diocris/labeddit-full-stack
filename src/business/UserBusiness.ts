@@ -20,26 +20,27 @@ export class UserBusiness {
     //
     //Get Users
     //
-    public getUsers = async (input: GetUsersInputDTO): Promise<GetUsersOutputDTO> => {
+    public getUsers = async (input: GetUsersInputDTO): Promise<GetUsersOutputDTO | GetUsersOutputDTO[]> => {
         const { q, token } = input
 
         const payload = this.tokenManager.getPayLoad(token)
 
-        if (payload === null) {
-            throw new BadRequest("Token inválido.")
+        if (!payload || payload === null) {
+            throw new BadRequest("Invalid token.")
         }
 
         if (payload.role !== USER_ROLES.ADMIN) {
             throw new BadRequest("Only Admins can use this function.")
         }
 
-        const usersDB: UserDB[] = await this.userDatabase.getUsers(q)
-        if (!usersDB) {
-            throw new NotFoundError("User not found.")
-        }
+        if (q) {
+            const [userDB]: UserDB[] = await this.userDatabase.getUsersById(q)
 
-        const users: UserModel[] = usersDB.map((userDB) => {
-            const user = new User(
+            if (!userDB) {
+                throw new NotFoundError("User not found.")
+            }
+
+            const user: User = new User(
                 userDB.id,
                 userDB.name,
                 userDB.email,
@@ -50,11 +51,28 @@ export class UserBusiness {
 
             return user.toBusinessModel()
 
-        })
 
-        const output: GetUsersOutputDTO = users
+        } else {
+            const usersDB: UserDB[] = await this.userDatabase.getUsers()
 
-        return output
+            const users: UserModel[] = usersDB.map((userDB) => {
+                const user = new User(
+                    userDB.id,
+                    userDB.name,
+                    userDB.email,
+                    userDB.password,
+                    userDB.role,
+                    userDB.created_at
+                )
+
+                return user.toBusinessModel()
+
+            })
+
+            const output: GetUsersOutputDTO = users
+
+            return output
+        }
     }
 
     //
@@ -69,8 +87,6 @@ export class UserBusiness {
         const hashedPassword = await this.hashManager.hash(password)
 
         const userDBExist: UserDB = await this.userDatabase.getUserByEmail(email)
-
-
 
         if (userDBExist) {
             throw new BadRequest("User already registered, try another one.")
@@ -153,29 +169,5 @@ export class UserBusiness {
         return output
     }
 
-    //
-    //Delete User
-    //
-    // public deleteUser = async (input: DeleteInputDTO): Promise<DeleteOutputDTO> => {
-
-    //     const { email } = input
-
-    //     const emailExists: UsersDB = await this.userDatabase.getUserByEmail(email)
-
-
-    //     if (!emailExists) {
-    //         throw new NotFoundError("User not found.")
-    //     }
-
-
-    //     await this.userDatabase.deleteUser(emailExists.email)
-
-    //     const output: DeleteOutputDTO = {
-    //         message: "User deleted successfully."
-    //     }
-
-    //     return output
-
-    // }
 
 }
