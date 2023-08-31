@@ -28,14 +28,17 @@ export class PostsController {
                 auth: req.headers.authorization,
                 id: req.query.id
             })
-   
+            
+            console.log(input)
+            
             const output: GetPostOutputDTO[] | GetPostOutputDTO = await this.postsBusiness.getAllPosts(input)
 
 
             res.status(200).send(output)
-
+            
 
         } catch (error: any) {
+            console.log(error)
             if (error instanceof ZodError) {
                 res.status(400).send(error.issues)
             }
