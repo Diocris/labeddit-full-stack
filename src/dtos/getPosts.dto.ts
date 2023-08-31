@@ -1,6 +1,6 @@
 import z from "zod"
 
-export type GetPostsInputDTO = { auth: string, id: string }
+export type GetPostsInputDTO = { auth: string, id?: string }
 
 
 export interface GetPostOutputDTO {

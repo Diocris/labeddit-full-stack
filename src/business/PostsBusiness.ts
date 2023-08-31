@@ -32,8 +32,8 @@ export class PostsBusiness {
         if (!payload || payload === null) {
             throw new BadRequest("Invalid token.")
         }
-
-        if (id) {
+        
+        if (id !== undefined) {
             const [postDB]: PostsDB[] = await this.postsDatabase.getPostsById(id)
 
             if (!postDB) {
@@ -82,6 +82,7 @@ export class PostsBusiness {
             return output
         } else {
             const postsDB = await this.postsDatabase.getPosts()
+    
             const output = []
             for (const post of postsDB) {
 

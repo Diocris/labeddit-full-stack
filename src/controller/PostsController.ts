@@ -26,10 +26,8 @@ export class PostsController {
 
             const input: GetPostsInputDTO = getPostsSchema.parse({
                 auth: req.headers.authorization,
-                id: req.query.id
+                id: req.params.id
             })
-            
-            console.log(input)
             
             const output: GetPostOutputDTO[] | GetPostOutputDTO = await this.postsBusiness.getAllPosts(input)
 
