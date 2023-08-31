@@ -30,7 +30,8 @@ describe('Testing Post Business', () => {
 
         expect(output).toEqual({
             postId: "id-mock-post02",
-            postCreator: "id-mock-admin",
+            postCreatorId: "id-mock-admin",
+            postCreatorName: "Test Admin",
             postContent: "Content mock second post.",
             postLikes: 1,
             postCreatedAt: expect.any(String),
@@ -96,22 +97,5 @@ describe('Testing Post Business', () => {
         }
     })
 
-    test('Test NotFoundError with post having no comments.', async () => {
-        expect.assertions(2)
-
-        try {
-            const input = GetPostInfoSchema.parse({
-                token: "token-mock-admin",
-                id: "id-mock-post01"
-            })
-
-            await postBusiness.getPost(input)
-
-        } catch (error) {
-            if (error instanceof NotFoundError) {
-                expect(error.statusCode).toBe(404)
-                expect(error.message).toBe("Comments not found.")
-            }
-        }
-    })
+   
 })

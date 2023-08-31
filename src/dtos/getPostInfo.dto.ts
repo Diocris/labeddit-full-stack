@@ -7,7 +7,8 @@ export interface GetPostInfoInputDTO {
 
 export interface GetPostInfoOuputDTO {
     postId: string,
-    postCreator: string,
+    postCreatorId: string,
+    postCreatorName: string,
     postContent: string,
     postLikes: number,
     postCreatedAt: string,

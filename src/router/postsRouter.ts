@@ -16,9 +16,12 @@ postsRouter.get("/", postsController.getAllPosts)
 postsRouter.post("/:id/comments/:commentid", postsController.likeComment)
 postsRouter.post("/:id/comments", postsController.commentPost)
 postsRouter.get("/:id/comments", postsController.getPost)
+postsRouter.get("/:id/comments/:commentid", postsController.getCommentsLike)
 postsRouter.post("/", postsController.createPost)
 postsRouter.put("/:id", postsController.editPost)
 postsRouter.delete("/:id", postsController.deletePost)
 postsRouter.post("/:id/like", postsController.likePost)
+postsRouter.get("/:id/like", postsController.getLikes)
+
 
 

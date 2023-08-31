@@ -184,7 +184,7 @@ describe('Testing Post Business', () => {
         } catch (error) {
             if (error instanceof BadRequest) {
                 expect(error.statusCode).toBe(400)
-                expect(error.message).toBe("Creators can't like them own post.")
+                expect(error.message).toBe("Creators can't like or dislike their own post.")
             }
         }
     })

@@ -45,7 +45,7 @@ describe("Testando signup", () => {
         } catch (error) {
             if (error instanceof BadRequest) {
                 expect(error.statusCode).toBe(400)
-                expect(error.message).toBe("User already registered, try another one.")
+                expect(error.message).toBe("User email already registered, try another one.")
             }
         }
 

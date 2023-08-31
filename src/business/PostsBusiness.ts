@@ -284,7 +284,7 @@ export class PostsBusiness {
         }
 
         if (post.creator_id === likePostDB.user_id) {
-            throw new BadRequest("Creators can't like them own post.")
+            throw new BadRequest("Creators can't like or dislike their own post.")
         }
 
 
@@ -329,7 +329,39 @@ export class PostsBusiness {
         return output
 
     }
+    
+    //
+    //get likes
+    //
+    public getLikes =async (input:any) => {
+        const {token, postId} = input
+        
+        const payload = await this.tokenManager.getPayLoad(token)
+        
+        if(!payload){
+            throw new BadRequest("Invalid token.")
+        }
+        
+        const [user] = await this.userDatabase.getUsersById(payload.id)
+        if(!user){
+            throw new NotFoundError("User not found.")
+        }
+        
+        const [post] = await this.postsDatabase.getPostsById(postId)
+        
+        if(!post){
+            throw new NotFoundError("Post not found.")
+        }
+        
+        const searchInDb = {
+            user_id: user.id,
+            post_id: post.id      
+        }
 
+        const output = await this.likesDatabase.getLikes(searchInDb)
+        return output
+        
+    }
     //
     //Comment in a post
     //
@@ -428,15 +460,15 @@ export class PostsBusiness {
             throw new NotFoundError("Post not found.")
         }
         const commentsDB: CommentsDB[] = await this.postsDatabase.getCommentsByPostId(id)
-        if (!commentsDB || commentsDB.length === 0) {
-            throw new NotFoundError("Comments not found.")
-        }
+    
         let comments = [];
 
         for (const comment of commentsDB) {
 
             const [user]: UserDB[] = await this.userDatabase.getUsers(comment.user_id)
-
+   
+            
+            
 
             const commentInfo: CommentDTO = {
                 commentId: comment.id,
@@ -450,10 +482,13 @@ export class PostsBusiness {
 
             comments.push(commentInfo)
         }
-
-        const output: GetPostInfoOuputDTO = {
+         const [creator]: UserDB[] = await this.userDatabase.getUsersById(postDB.creator_id)
+       
+         const output: GetPostInfoOuputDTO = {
+            
             postId: postDB.id,
-            postCreator: postDB.creator_id,
+            postCreatorId: creator.id,
+            postCreatorName: creator.name,
             postContent: postDB.content,
             postLikes: postDB.likes - postDB.dislikes,
             postCreatedAt: postDB.created_at,
@@ -463,7 +498,40 @@ export class PostsBusiness {
 
         return output
     }
+    //
+    //Get comments likes
+    //
+    
+    public getCommentsLikes  =async (input:any) => {
+        const {token, commentId} = input
+        
+        const payload = await this.tokenManager.getPayLoad(token)
+        
+        if(!payload){
+            throw new BadRequest("Invalid token.")
+        }
+        
+        const [user] = await this.userDatabase.getUsersById(payload.id)
+        if(!user){
+            throw new NotFoundError("User not found.")
+        }
+        
+        const [comment] = await this.postsDatabase.getCommentsById(commentId)
+        
+        if(!comment){
+            throw new NotFoundError("Comment not found.")
+        }
+        const searchInDb = {
+            user_id: user.id,
+            comment_id: comment.id     
+        }
 
+        
+        const output = await this.postsDatabase.getCommentLikesByCommentId(searchInDb)
+
+        return output
+        
+    }
     //
     //Like Comment
     //
@@ -512,7 +580,7 @@ export class PostsBusiness {
             } else if (commentLike.like === 0 && likeValue === 0) {
 
                 await this.postsDatabase.deleteLike(commentsLikeDB)
-                return output = "You removed your dislike."
+                output = "You removed your dislike."
 
             } else if (commentLike.like === 1 && commentsLikeDB.like === 0) {
 

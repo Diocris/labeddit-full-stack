@@ -89,7 +89,7 @@ export class UserBusiness {
         const userDBExist: UserDB = await this.userDatabase.getUserByEmail(email)
 
         if (userDBExist) {
-            throw new BadRequest("User already registered, try another one.")
+            throw new BadRequest("User email already registered, try another one.")
         }
 
 

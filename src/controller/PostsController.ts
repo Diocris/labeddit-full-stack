@@ -28,7 +28,7 @@ export class PostsController {
                 auth: req.headers.authorization,
                 id: req.query.id
             })
-            console.log(input)
+   
             const output: GetPostOutputDTO[] | GetPostOutputDTO = await this.postsBusiness.getAllPosts(input)
 
 
@@ -184,6 +184,28 @@ export class PostsController {
     }
 
     //
+    public getLikes =async (req:Request, res: Response) => {
+        try {
+            const input = {
+                token: req.headers.authorization,
+                postId: req.params.id
+            }
+            
+            const output = await this.postsBusiness.getLikes(input)
+     
+            res.status(200).send(output)
+        } catch (error:any) {
+            if (error instanceof ZodError) {
+                res.status(400).send(error.issues)
+            }
+            else if (error instanceof BaseError) {
+                res.status(error.statusCode).send(error.message)
+            } else {
+                res.send("Unexpected error.")
+            }
+        }
+    }
+    //
     //Comment in a post
     //
     public commentPost = async (req: Request, res: Response) => {
@@ -199,6 +221,32 @@ export class PostsController {
             res.status(200).send(output)
 
         } catch (error: any) {
+            if (error instanceof ZodError) {
+                res.status(400).send(error.issues)
+            }
+            else if (error instanceof BaseError) {
+                res.status(error.statusCode).send(error.message)
+            } else {
+                res.send("Unexpected error.")
+            }
+        }
+    }
+    //
+    //Get Comments Likes
+    //
+    public getCommentsLike=async (req:Request, res: Response) => {
+        try {
+            const input = {
+                token: req.headers.authorization,
+                postId: req.params.id,
+                commentId: req.params.commentid
+            }
+       
+            
+            const output = await this.postsBusiness.getCommentsLikes(input)
+     
+            res.status(200).send(output)
+        } catch (error:any) {
             if (error instanceof ZodError) {
                 res.status(400).send(error.issues)
             }

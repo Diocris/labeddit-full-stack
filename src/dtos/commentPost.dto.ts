@@ -11,7 +11,7 @@ export interface CommentPostOutputDTO {
 }
 
 export const CommentPostSchema = z.object({
-    token: z.string(),
-    postId: z.string(),
-    comment: z.string()
+    token: z.string({required_error: "Token is required.", invalid_type_error: "Invalid token format."}),
+    postId: z.string({required_error:"Post id is required", invalid_type_error: "Invalid post id format."}),
+    comment: z.string({required_error: "Comment id is required", invalid_type_error:"Invalid comment id format"})
 }).transform(data => data as CommentPostInputDTO)

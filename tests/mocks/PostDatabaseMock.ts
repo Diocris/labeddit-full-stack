@@ -92,25 +92,6 @@ const commentLikeMock = [{
 }]
 
 
-// const fullPostMock = {
-//     postId: "id-mock-post02",
-//     postCreator: "id-mock-admin",
-//     postContent: "Content mock second post.",
-//     postLikes: 1,
-//     postCreatedAt: String(new Date().toISOString()),
-//     postUpdatedAt: String(new Date().toISOString()),
-//     postComments: [
-//         {
-//             commentId: "id-mock-comment01-post02",
-//             commentUserId: "id-mock-user",
-//             commentUserName: "Test User",
-//             commentContent: "Comment mock second post.",
-//             commentLikes: 1,
-//             commentCreatedAt: String(new Date().toISOString()),
-//             commentUpdatedAt: String(new Date().toISOString())
-//         }
-//     ]
-// }
 
 
 
