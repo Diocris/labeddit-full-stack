@@ -42,7 +42,7 @@ export class PostsController {
             else if (error instanceof BaseError) {
                 res.status(error.statusCode).send(error.message)
             } else {
-                res.send("Unexpected error.")
+                res.send("Unexpected error, we are trying to figure it out.")
             }
         }
 
