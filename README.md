@@ -3,6 +3,7 @@
 ## About
 The Project Labook API is a comprehensive backend service designed for educational purposes to recreate the functionality of a social media platform. This API empowers users to interact with the backend of the Labook application, demonstrating a range of key technologies, concepts, and best practices in web development.
 ### **[API Documentation](https://documenter.getpostman.com/view/27681104/2s9Y5csfMP)**
+### **[Frontend Repository](https://github.com/Diocris/labeddit-fullstack-frontend)**
 ## Tecnologies and Concepts
 
 * User Authentication and Authorization: The API provides robust user signup and login functionalities, employing secure JSON Web Tokens (JWT) for authentication. User roles are utilized to control access to specific endpoints, showcasing authorization principles.
